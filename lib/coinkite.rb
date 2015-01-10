@@ -147,8 +147,10 @@ module Coinkite
       }
     end
 
-    def get(endpoint, *args)
-      request('GET', endpoint, *args)
+    %w(get put).each do |method|
+      define_method(method) do |endpoint, *args|
+        request(method.upcase, endpoint, *args)
+      end
     end
 
     def get_accounts
@@ -196,6 +198,23 @@ module Coinkite
       # this returns a generator function
       endpoint = "/v1/list/#{what}"
       get_iter(endpoint)
+    end
+
+    def new_send(amount, account, dest)
+      put("/v1/new/send", {amount: amount, account: account, dest: dest})
+    end
+
+    def new_voucher(amount, account)
+      put("/v1/new/voucher", {amount: amount, account: account})
+    end
+
+    def auth_send(refnum, authcode)
+      put("/v1/update/#{refnum}/auth_send", {authcode: authcode})
+    end
+
+    def create_and_send_voucher(amount, account)
+      voucher = new_voucher(amount, account)
+      auth_send(voucher['result']['CK_refnum'], voucher['result']['send_authcode'])
     end
 
     private
